@@ -7,9 +7,8 @@ AI-powered ticket management system. See `project-scope.md`, `tech-stack.md` and
 Requires [Bun](https://bun.sh) and Docker.
 
 ```sh
-bun install
+bun install                           # also generates the Prisma client
 cp server/.env.example server/.env
 bun run db:up                         # start PostgreSQL
-cd server && bunx prisma generate && cd ..
 bun run dev                           # client on :5173, server on :3000
 ```
