@@ -1,0 +1,12 @@
+{
+  "name": "helpdesk-starter",
+  "private": true,
+  "workspaces": ["client", "server"],
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "build": "bun run --filter '*' build",
+    "typecheck": "bun run --filter '*' typecheck",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down"
+  }
+}
