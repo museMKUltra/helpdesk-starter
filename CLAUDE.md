@@ -9,7 +9,7 @@ Always use the **context7** MCP server (`resolve-library-id` → `query-docs`) t
 ## Stack
 
 - **Runtime / package manager:** Bun (workspaces). Use `bun` / `bunx`, not npm/npx — Node is not installed on this machine.
-- **Server (`server/`):** Express 5 + TypeScript, run directly by Bun (no build step for dev). Prisma ORM with PostgreSQL.
+- **Server (`server/`):** Express 5 + TypeScript, run directly by Bun (no build step for dev). Prisma 7 with PostgreSQL via the `@prisma/adapter-pg` driver adapter. The database URL is set in `server/prisma.config.ts` (not in `schema.prisma`); the client is generated into `server/src/generated/prisma` (gitignored, regenerated on `bun install` and by `bun run db:generate`). Import it from `./generated/prisma/client`, never from `@prisma/client`.
 - **Client (`client/`):** React 19 + TypeScript, Vite, Tailwind CSS v4 (`@tailwindcss/vite`), React Router 7 (import from `react-router`).
 - Vite dev server proxies `/api/*` to the Express server on port 3000. All API routes are prefixed with `/api`.
 
@@ -34,7 +34,8 @@ bun run db:studio        # prisma studio
 ```
 client/src/        React app (main.tsx, App.tsx, index.css)
 server/src/        index.ts (listen), app.ts (Express app + routes), db.ts (Prisma client)
-server/prisma/     schema.prisma
+server/prisma/     schema.prisma (models + migrations)
+server/prisma.config.ts  Prisma CLI config (schema path, migrations path, DATABASE_URL)
 ```
 
 ## Environment
