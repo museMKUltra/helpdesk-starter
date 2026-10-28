@@ -27,7 +27,12 @@ bun run build            # build both workspaces
 bun run db:migrate       # prisma migrate dev
 bun run db:generate      # prisma generate
 bun run db:studio        # prisma studio
+bun run db:seed          # create the admin user from ADMIN_EMAIL / ADMIN_PASSWORD
 ```
+
+## Auth
+
+Better Auth (`server/src/auth.ts`) with email/password and database sessions (Prisma adapter; `User`, `Session`, `Account`, `Verification` models). Mounted at `/api/auth/*splat` **before** `express.json()`. Public sign-up is disabled; users are created server-side (see `src/seed.ts`). Protect routes with `requireAuth` (`src/middleware/requireAuth.ts`), which sets `req.session` (`{ user, session }`).
 
 ## Layout
 
@@ -40,7 +45,7 @@ server/prisma.config.ts  Prisma CLI config (schema path, migrations path, DATABA
 
 ## Environment
 
-- `server/.env` (gitignored; template in `server/.env.example`) holds `PORT` and `DATABASE_URL`. Bun and Prisma load it automatically.
+- `server/.env` (gitignored; template in `server/.env.example`) holds `PORT`, `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and the seed's `ADMIN_EMAIL` / `ADMIN_PASSWORD`. Bun and Prisma load it automatically.
 - Local PostgreSQL 17 runs as the Windows service `postgresql-17` (binaries in `%LOCALAPPDATA%\Programs\PostgreSQL17\pgsql\bin`, not on PATH). Dev credentials: user `helpdesk`, password `helpdesk`, database `helpdesk`.
 - `docker-compose.yml` defines an alternative Postgres on the same port 5432 — don't run both at once.
 - Bun lives at `%USERPROFILE%\.bun\bin`; prepend it to PATH in a shell if `bun` is not found.

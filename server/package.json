@@ -10,11 +10,13 @@
     "postinstall": "bunx --bun prisma generate",
     "db:migrate": "bunx --bun prisma migrate dev",
     "db:generate": "bunx --bun prisma generate",
-    "db:studio": "bunx --bun prisma studio"
+    "db:studio": "bunx --bun prisma studio",
+    "db:seed": "bun src/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
+    "better-auth": "^1.7.14",
     "express": "^5.1.0"
   },
   "devDependencies": {
