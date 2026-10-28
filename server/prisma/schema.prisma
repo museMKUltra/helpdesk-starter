@@ -10,6 +10,11 @@ datasource db {
 
 // Better Auth core models (user, session, account, verification).
 
+enum Role {
+  admin
+  agent
+}
+
 model User {
   id            String    @id
   name          String
@@ -20,6 +25,8 @@ model User {
   updatedAt     DateTime  @default(now()) @updatedAt
   sessions      Session[]
   accounts      Account[]
+
+  role          Role      @default(agent)
 
   @@map("user")
 }

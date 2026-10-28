@@ -32,7 +32,7 @@ bun run db:seed          # create the admin user from ADMIN_EMAIL / ADMIN_PASSWO
 
 ## Auth
 
-Better Auth (`server/src/auth.ts`) with email/password and database sessions (Prisma adapter; `User`, `Session`, `Account`, `Verification` models). Mounted at `/api/auth/*splat` **before** `express.json()`. Public sign-up is disabled; users are created server-side (see `src/seed.ts`). Protect routes with `requireAuth` (`src/middleware/requireAuth.ts`), which sets `req.session` (`{ user, session }`).
+Better Auth (`server/src/auth.ts`) with email/password and database sessions (Prisma adapter; `User`, `Session`, `Account`, `Verification` models). Mounted at `/api/auth/*splat` **before** `express.json()`. Public sign-up is disabled; users are created server-side (see `src/seed.ts`). Users have a `role` (Prisma `Role` enum: `admin` | `agent`, default `agent`; use `Role` from `./generated/prisma/enums`, not string literals) declared as a Better Auth additional field with `input: false`, so it can only be set server-side. The auth models are maintained by hand; don't run `auth generate --output prisma/schema.prisma`, as it would overwrite the enum with `String`. Prisma 7's `migrate dev` doesn't regenerate the client, so run `db:generate` after migrating. Protect routes with `requireAuth` (`src/middleware/requireAuth.ts`), which sets `req.session` (`{ user, session }`).
 
 ## Layout
 
