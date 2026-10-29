@@ -20,7 +20,11 @@ export const auth = betterAuth({
       },
     },
   },
-  trustedOrigins: ["http://localhost:5173"],
+  // Comma-separated client origins (e.g. the Vite dev server). BETTER_AUTH_URL is always trusted.
+  trustedOrigins: (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
 });
 
 export type Session = typeof auth.$Infer.Session;

@@ -45,7 +45,7 @@ server/prisma.config.ts  Prisma CLI config (schema path, migrations path, DATABA
 
 ## Environment
 
-- `server/.env` (gitignored; template in `server/.env.example`) holds `PORT`, `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and the seed's `ADMIN_EMAIL` / `ADMIN_PASSWORD`. Bun and Prisma load it automatically.
+- `server/.env` (gitignored; template in `server/.env.example`) holds `PORT`, `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS` (comma-separated client origins, e.g. `http://localhost:5173`), and the seed's `ADMIN_EMAIL` / `ADMIN_PASSWORD`. Bun and Prisma load it automatically.
 - Local PostgreSQL 17 runs as the Windows service `postgresql-17` (binaries in `%LOCALAPPDATA%\Programs\PostgreSQL17\pgsql\bin`, not on PATH). Dev credentials: user `helpdesk`, password `helpdesk`, database `helpdesk`.
 - `docker-compose.yml` defines an alternative Postgres on the same port 5432 — don't run both at once.
 - Bun lives at `%USERPROFILE%\.bun\bin`; prepend it to PATH in a shell if `bun` is not found.
