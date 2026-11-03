@@ -33,12 +33,43 @@ bun run db:seed          # create the admin user from ADMIN_EMAIL / ADMIN_PASSWO
 
 ## Auth
 
-Better Auth (`server/src/auth.ts`) with email/password and database sessions (Prisma adapter; `User`, `Session`, `Account`, `Verification` models). Mounted at `/api/auth/*splat` **before** `express.json()`. Public sign-up is disabled; users are created server-side (see `src/seed.ts`). Users have a `role` (Prisma `Role` enum: `admin` | `agent`, default `agent`; use `Role` from `./generated/prisma/enums`, not string literals) declared as a Better Auth additional field with `input: false`, so it can only be set server-side. The auth models are maintained by hand; don't run `auth generate --output prisma/schema.prisma`, as it would overwrite the enum with `String`. Prisma 7's `migrate dev` doesn't regenerate the client, so run `db:generate` after migrating. Protect routes with `requireAuth` (`src/middleware/requireAuth.ts`), which sets `req.session` (`{ user, session }`).
+Better Auth with email/password and database sessions stored in Postgres via the Prisma adapter. Sessions are cookie-based: the browser sends the session cookie to `/api/*` on the same origin (the Vite proxy in dev), so no tokens are handled in app code.
+
+### Server
+
+- **Config:** `server/src/auth.ts`. `emailAndPassword` is enabled with `disableSignUp: true`, so there is no public registration. `trustedOrigins` comes from `BETTER_AUTH_TRUSTED_ORIGINS` (`BETTER_AUTH_URL` is always trusted). Add any new client origin there, or Better Auth rejects its requests.
+- **Mounting:** `app.all("/api/auth/*splat", toNodeHandler(auth))` in `src/app.ts`, **before** `express.json()`, because Better Auth reads the raw body. All sign-in, sign-out and session endpoints live under `/api/auth/*`. Don't write custom login/logout routes.
+- **Protecting routes:** add `requireAuth` (`src/middleware/requireAuth.ts`). It calls `auth.api.getSession({ headers: fromNodeHeaders(req.headers) })`, returns `401 { error: "Unauthorized" }` when there's no session, and otherwise sets `req.session` (`{ user, session }`, typed as `Session` from `auth.ts`). `GET /api/me` is the example.
+- **Creating users:** sign-up is disabled, so users are created server-side through Better Auth's internal adapter (`(await auth.$context).internalAdapter.createUser` + `linkAccount` with `providerId: "credential"` and a password hashed by `ctx.password.hash`). `src/seed.ts` does this for the admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD`, and re-running it promotes an existing user to admin. Follow the same pattern for the planned admin "create agent" endpoint.
+
+### Roles
+
+- `User.role` is the Prisma `Role` enum (`admin` | `agent`, default `agent`). In server code use `Role` from `./generated/prisma/enums`, not string literals.
+- It's a Better Auth additional field with `input: false`, so clients can never set it through auth endpoints. It can only be set server-side.
+- Role-based access control (admin-only routes) isn't implemented yet. When adding it, check `req.session.user.role` after `requireAuth`.
+
+### Schema
+
+- The auth models (`User`, `Session`, `Account`, `Verification`) in `schema.prisma` are maintained by hand. Don't run `auth generate --output prisma/schema.prisma`: it would overwrite the `Role` enum with `String`.
+- Prisma 7's `migrate dev` doesn't regenerate the client, so run `db:generate` after migrating.
+
+### Client
+
+- **Auth client:** `client/src/lib/auth-client.ts` creates it with `createAuthClient` from `better-auth/react`. It has no `baseURL`, so requests go to this origin's `/api/auth`. It exports `useSession`, `signIn` and `signOut`, so import those rather than calling `authClient` directly.
+- **Role type:** the client mirrors the server's `role` field by hand with `inferAdditionalFields({ user: { role: { type: ["admin", "agent"], required: true, input: false } } })`, so it doesn't type-check against server sources. If you change `Role` or add user fields, update this too.
+- **Route protection:** `RequireAuth` (`src/components/RequireAuth.tsx`) is a layout route in `App.tsx`. It shows a loading state while `useSession` is pending, redirects to `/login` when there's no session, and otherwise renders `NavBar` and the child route. Put new authenticated routes inside `<Route element={<RequireAuth />}>`.
+- **Login:** `LoginPage` calls `signIn.email({ email, password })`. On error it sets `root.server`; on success it navigates to `/`. A user who is already signed in is redirected from `/login` to `/`.
+- **Logout:** `NavBar` calls `signOut()` and then navigates to `/login`.
+- `useSession` is reactive, so components re-render after sign-in and sign-out without manual refetching.
 
 ## Layout
 
 ```
-client/src/        React app (main.tsx, App.tsx, index.css)
+client/src/        React app (main.tsx, App.tsx, index.css — Tailwind + shadcn theme)
+client/src/pages/  route components (LoginPage, HomePage)
+client/src/components/     app components (NavBar, RequireAuth)
+client/src/components/ui/  shadcn components (generated by the CLI; edit only to customize)
+client/src/lib/    auth-client.ts (Better Auth client), utils.ts (cn)
 server/src/        index.ts (listen), app.ts (Express app + routes), db.ts (Prisma client)
 server/prisma/     schema.prisma (models + migrations)
 server/prisma.config.ts  Prisma CLI config (schema path, migrations path, DATABASE_URL)
@@ -54,4 +85,6 @@ server/prisma.config.ts  Prisma CLI config (schema path, migrations path, DATABA
 ## Conventions
 
 - TypeScript strict mode with `verbatimModuleSyntax` — use `import type` for type-only imports.
+- Build UI from shadcn components and theme tokens (`bg-muted`, `text-muted-foreground`, `text-destructive`, …) rather than raw Tailwind colors like `gray-*` / `blue-*`. `NavBar`, `RequireAuth` and `HomePage` still use the old raw-color styling and should be migrated.
+- Forms: React Hook Form + Zod (`zodResolver`), laid out with shadcn `Field` / `FieldLabel` / `FieldError` (`errors={[errors.x]}`), with `data-invalid` on `Field` and `aria-invalid` on the input. Show server errors via `setError("root.server", …)` in a destructive `Alert`. `LoginPage` is the reference.
 - Verify changes with `bun run typecheck` before considering work done.
