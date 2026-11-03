@@ -11,6 +11,7 @@ Always use the **context7** MCP server (`resolve-library-id` → `query-docs`) t
 - **Runtime / package manager:** Bun (workspaces). Use `bun` / `bunx`, not npm/npx — Node is not installed on this machine.
 - **Server (`server/`):** Express 5 + TypeScript, run directly by Bun (no build step for dev). Prisma 7 with PostgreSQL via the `@prisma/adapter-pg` driver adapter. The database URL is set in `server/prisma.config.ts` (not in `schema.prisma`); the client is generated into `server/src/generated/prisma` (gitignored, regenerated on `bun install` and by `bun run db:generate`). Import it from `./generated/prisma/client`, never from `@prisma/client`.
 - **Client (`client/`):** React 19 + TypeScript, Vite, Tailwind CSS v4 (`@tailwindcss/vite`), React Router 7 (import from `react-router`).
+- **UI components:** shadcn (`client/components.json`, style `base-nova` on Base UI, neutral base color, CSS variables in `src/index.css`, Lucide icons). Add components from `client/` with `bunx --bun shadcn@latest add <name>`; they land in `src/components/ui`. Import via the `@/` alias (`@/components/ui/button`, `cn` from `@/lib/utils`).
 - Vite dev server proxies `/api/*` to the Express server on port 3000. All API routes are prefixed with `/api`.
 
 ## Commands
