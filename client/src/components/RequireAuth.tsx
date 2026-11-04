@@ -11,7 +11,7 @@ export default function RequireAuth() {
 
   return (
     <>
-      <NavBar userName={session.user.name} />
+      <NavBar userName={session.user.name} isAdmin={session.user.role === "admin"} />
       <Outlet />
     </>
   );

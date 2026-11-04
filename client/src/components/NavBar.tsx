@@ -1,7 +1,7 @@
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { signOut } from "../lib/auth-client";
 
-export default function NavBar({ userName }: { userName: string }) {
+export default function NavBar({ userName, isAdmin }: { userName: string; isAdmin: boolean }) {
   const navigate = useNavigate();
 
   async function handleSignOut() {
@@ -11,7 +11,16 @@ export default function NavBar({ userName }: { userName: string }) {
 
   return (
     <nav className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
-      <span className="text-lg font-semibold">Helpdesk</span>
+      <div className="flex items-center gap-6">
+        <Link to="/" className="text-lg font-semibold">
+          Helpdesk
+        </Link>
+        {isAdmin && (
+          <Link to="/users" className="text-sm text-muted-foreground hover:text-foreground">
+            Users
+          </Link>
+        )}
+      </div>
       <div className="flex items-center gap-4">
         <span className="text-sm text-gray-700">{userName}</span>
         <button
