@@ -46,7 +46,17 @@ Better Auth with email/password and database sessions stored in Postgres via the
 
 - `User.role` is the Prisma `Role` enum (`admin` | `agent`, default `agent`). In server code use `Role` from `./generated/prisma/enums`, not string literals.
 - It's a Better Auth additional field with `input: false`, so clients can never set it through auth endpoints. It can only be set server-side.
-- Admin-only routes are only protected on the **client** so far (`RequireAdmin`, see Client below). There's no server-side role middleware yet. When an admin-only API endpoint is added, check `req.session.user.role === Role.admin` after `requireAuth` and return `403`. A client-side guard alone doesn't protect data.
+- Admin-only API routes use `requireAdmin` (`src/middleware/requireAdmin.ts`) **after** `requireAuth`: `app.get("/api/admin/...", requireAuth, requireAdmin, handler)`. It returns `403 { error: "Forbidden" }` unless `req.session.user.role === Role.admin`. The client-side `RequireAdmin` (see Client below) is only for UX; it doesn't protect data.
+
+### Hardening
+
+- `auth.ts` throws at startup unless `BETTER_AUTH_SECRET` is set (at least 32 chars, not Better Auth's public default). This also applies to the seed script.
+- Better Auth rate limiting is enabled explicitly (it's otherwise on only when `NODE_ENV=production`), with in-memory storage, which is per process. The sign-in limit is 3 requests per 10 s per IP.
+- **Client IP:** Better Auth reads the IP only from headers, so `app.ts` overwrites `x-helpdesk-client-ip` (`CLIENT_IP_HEADER`) with Express's `req.ip` before the auth handler, and Better Auth reads only that header. `req.ip` is the socket address unless `TRUST_PROXY` (Express `trust proxy`: a hop count or proxy IPs/CIDRs; `true` is rejected) is set. Set `TRUST_PROXY` when deploying behind a reverse proxy, or every client gets the proxy's IP.
+- `helmet()` sets security headers (CSP, HSTS, `X-Frame-Options`, …) and `x-powered-by` is disabled. Whatever serves `client/dist` in production needs equivalent headers.
+- With `NODE_ENV=production`, `auth.ts` requires an `https://` `BETTER_AUTH_URL` and forces `Secure` cookies.
+- `app.ts` ends with an error handler that logs the error and returns `500 { error: "Internal Server Error" }`, so stack traces never reach the client. Keep it the last `app.use`.
+- `bun run start` sets `NODE_ENV=production`.
 
 ### Schema
 
