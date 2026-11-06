@@ -12,3 +12,10 @@ cp server/.env.example server/.env
 bun run db:up                         # start PostgreSQL
 bun run dev                           # client on :5173, server on :3000
 ```
+
+## E2E tests
+
+```sh
+cd e2e && bunx playwright install chromium   # once
+bun run test:e2e                             # uses the helpdesk_test database on :5432
+```

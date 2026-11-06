@@ -1,11 +1,13 @@
 {
   "name": "helpdesk-starter",
   "private": true,
-  "workspaces": ["client", "server"],
+  "workspaces": ["client", "server", "e2e"],
   "scripts": {
     "dev": "bun run --filter '*' dev",
     "build": "bun run --filter '*' build",
     "typecheck": "bun run --filter '*' typecheck",
+    "test:e2e": "bun run --filter e2e test",
+    "test:e2e:ui": "bun run --filter e2e test:ui",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down"
   }

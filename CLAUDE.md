@@ -23,6 +23,8 @@ bun install              # install all workspaces
 bun run dev              # client (:5173) + server (:3000) with watch
 bun run typecheck        # tsc --noEmit in both workspaces
 bun run build            # build both workspaces
+bun run test:e2e         # Playwright e2e tests (starts its own servers + test DB)
+bun run test:e2e:ui      # same, in Playwright's UI mode
 
 # in server/
 bun run db:migrate       # prisma migrate dev
@@ -74,6 +76,15 @@ Better Auth with email/password and database sessions stored in Postgres via the
 - **Logout:** `NavBar` calls `signOut()` and then navigates to `/login`.
 - `useSession` is reactive, so components re-render after sign-in and sign-out without manual refetching.
 
+## E2E tests (Playwright)
+
+- The `e2e/` workspace holds `playwright.config.ts`, `test-env.ts` (ports, test DB URL, server env, seeded admin credentials) and specs in `e2e/tests/`. Chromium only. Install the browser once with `bunx playwright install chromium` from `e2e/`.
+- Each run starts its **own** servers, so it can run alongside `bun run dev`: Express on **:3100** and Vite on **:5174**. Vite's `/api` proxy target comes from `API_PROXY_TARGET` (default `http://localhost:3000`). `reuseExistingServer` is off so the DB is always reset.
+- **Test database:** `helpdesk_test` on the same Postgres (override with `TEST_DATABASE_URL`; the name must end in `_test`). Before the server starts, `e2e/scripts/reset-test-db.ts` runs `prisma migrate deploy` (which creates the DB if it's missing), truncates every table except `_prisma_migrations`, and seeds the admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `test-env.ts`. It doesn't use `migrate reset`, because Prisma blocks that command when it runs under an AI agent.
+- Playwright starts `webServer` **before** `globalSetup`, and `/api/health` needs the DB. That's why the reset is chained into the server's `webServer` command and isn't in global setup.
+- The test server runs with `NODE_ENV=test` and `DISABLE_RATE_LIMIT=true`. `auth.ts` throws if `DISABLE_RATE_LIMIT` is set under any other `NODE_ENV`.
+- `workers: 1`: all tests share one database.
+
 ## Layout
 
 ```
@@ -85,6 +96,7 @@ client/src/lib/    auth-client.ts (Better Auth client), utils.ts (cn)
 server/src/        index.ts (listen), app.ts (Express app + routes), db.ts (Prisma client)
 server/prisma/     schema.prisma (models + migrations)
 server/prisma.config.ts  Prisma CLI config (schema path, migrations path, DATABASE_URL)
+e2e/               Playwright config, test env, DB reset script, tests/
 ```
 
 ## Environment
