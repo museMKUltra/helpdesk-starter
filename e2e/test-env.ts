@@ -25,8 +25,6 @@ export const serverEnv: Record<string, string> = {
   BETTER_AUTH_SECRET: "e2e-only-secret-do-not-use-anywhere-else-0123456789",
   BETTER_AUTH_URL: SERVER_URL,
   BETTER_AUTH_TRUSTED_ORIGINS: CLIENT_URL,
-  // Tests sign in far more often than the 3-per-10s sign-in limit allows from one IP.
-  DISABLE_RATE_LIMIT: "true",
   ADMIN_EMAIL,
   ADMIN_PASSWORD,
 };

@@ -19,12 +19,6 @@ if (isProduction && !process.env.BETTER_AUTH_URL?.startsWith("https://")) {
   throw new Error("BETTER_AUTH_URL must be an https:// URL in production");
 }
 
-// The e2e suite (NODE_ENV=test) signs in more often than the sign-in limit allows from one IP.
-const disableRateLimit = process.env.DISABLE_RATE_LIMIT === "true";
-if (disableRateLimit && process.env.NODE_ENV !== "test") {
-  throw new Error("DISABLE_RATE_LIMIT is only allowed with NODE_ENV=test");
-}
-
 // Set by app.ts from Express's req.ip, after removing any client-supplied value.
 // Better Auth reads the client IP (rate limiting, session ipAddress) only from headers.
 export const CLIENT_IP_HEADER = "x-helpdesk-client-ip";
@@ -36,11 +30,11 @@ export const auth = betterAuth({
     useSecureCookies: isProduction,
   },
   database: prismaAdapter(prisma, { provider: "postgresql" }),
-  // On by default only when NODE_ENV=production, which Bun doesn't set, so enable it explicitly.
+  // Production only (`bun run start` sets NODE_ENV=production); off in dev and in the e2e suite.
   // Sign-in uses Better Auth's built-in stricter rule (3 requests / 10 s per IP).
   // In-memory storage is per process: switch to "database" (needs a RateLimit model) when running multiple instances.
   rateLimit: {
-    enabled: !disableRateLimit,
+    enabled: isProduction,
     storage: "memory",
   },
   emailAndPassword: {

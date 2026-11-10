@@ -53,7 +53,7 @@ Better Auth with email/password and database sessions stored in Postgres via the
 ### Hardening
 
 - `auth.ts` throws at startup unless `BETTER_AUTH_SECRET` is set (at least 32 chars, not Better Auth's public default). This also applies to the seed script.
-- Better Auth rate limiting is enabled explicitly (it's otherwise on only when `NODE_ENV=production`), with in-memory storage, which is per process. The sign-in limit is 3 requests per 10 s per IP.
+- Better Auth rate limiting is on **only in production** (`enabled: isProduction` in `auth.ts`; `bun run start` sets `NODE_ENV=production`), off in dev and in the e2e suite. It uses in-memory storage, which is per process. The sign-in limit is 3 requests per 10 s per IP.
 - **Client IP:** Better Auth reads the IP only from headers, so `app.ts` overwrites `x-helpdesk-client-ip` (`CLIENT_IP_HEADER`) with Express's `req.ip` before the auth handler, and Better Auth reads only that header. `req.ip` is the socket address unless `TRUST_PROXY` (Express `trust proxy`: a hop count or proxy IPs/CIDRs; `true` is rejected) is set. Set `TRUST_PROXY` when deploying behind a reverse proxy, or every client gets the proxy's IP.
 - `helmet()` sets security headers (CSP, HSTS, `X-Frame-Options`, …) and `x-powered-by` is disabled. Whatever serves `client/dist` in production needs equivalent headers.
 - With `NODE_ENV=production`, `auth.ts` requires an `https://` `BETTER_AUTH_URL` and forces `Secure` cookies.
@@ -82,7 +82,7 @@ Better Auth with email/password and database sessions stored in Postgres via the
 - Each run starts its **own** servers, so it can run alongside `bun run dev`: Express on **:3100** and Vite on **:5174**. Vite's `/api` proxy target comes from `API_PROXY_TARGET` (default `http://localhost:3000`). `reuseExistingServer` is off so the DB is always reset.
 - **Test database:** `helpdesk_test` on the same Postgres (override with `TEST_DATABASE_URL`; the name must end in `_test`). Before the server starts, `e2e/scripts/reset-test-db.ts` runs `prisma migrate deploy` (which creates the DB if it's missing), truncates every table except `_prisma_migrations`, and seeds the admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `test-env.ts`. It doesn't use `migrate reset`, because Prisma blocks that command when it runs under an AI agent.
 - Playwright starts `webServer` **before** `globalSetup`, and `/api/health` needs the DB. That's why the reset is chained into the server's `webServer` command and isn't in global setup.
-- The test server runs with `NODE_ENV=test` and `DISABLE_RATE_LIMIT=true`. `auth.ts` throws if `DISABLE_RATE_LIMIT` is set under any other `NODE_ENV`.
+- The test server runs with `NODE_ENV=test`, so rate limiting is off and tests can sign in repeatedly.
 - `workers: 1`: all tests share one database.
 
 ## Layout
