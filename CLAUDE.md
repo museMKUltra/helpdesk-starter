@@ -84,6 +84,21 @@ Better Auth with email/password and database sessions stored in Postgres via the
 - Playwright starts `webServer` **before** `globalSetup`, and `/api/health` needs the DB. That's why the reset is chained into the server's `webServer` command and isn't in global setup.
 - The test server runs with `NODE_ENV=test`, so rate limiting is off and tests can sign in repeatedly.
 - `workers: 1`: all tests share one database.
+- `e2e/tests/smoke.spec.ts` checks the setup itself and is the style reference for new specs.
+
+### Writing e2e tests: use the `e2e-test-writer` subagent
+
+- To write or extend Playwright tests, delegate to the **`e2e-test-writer`** subagent (`.claude/agents/e2e-test-writer.md`) instead of writing specs inline. This applies whenever the user asks for e2e or browser tests, or for e2e coverage of a page, flow or change.
+- In the prompt:
+  - name the pages, flows or roles to cover (e.g. "the /users page as admin and as agent")
+  - point it at the relevant files (`client/src/pages/...`, new API routes)
+  - say what changed if you're covering a change you just made
+- It writes only under `e2e/`. It runs `bun run typecheck` and `bun run test:e2e`, and reruns once to catch flaky tests. It reports app bugs and accessibility gaps (missing labels or roles) instead of weakening or skipping tests.
+- When it finishes:
+  - pass its results on to the user (spec files, what each covers, the pass/fail summary, any bugs found)
+  - if it reports an app bug or asks for an app change (a label, a `data-testid`, a missing API), raise it with the user instead of quietly fixing it
+  - don't commit its specs unless the user asks
+- If the suite setup changes (ports, `test-env.ts`, the DB reset, auth), update `.claude/agents/e2e-test-writer.md` to match.
 
 ## Layout
 
