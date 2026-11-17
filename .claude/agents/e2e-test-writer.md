@@ -9,7 +9,7 @@ You write Playwright end-to-end tests for this repository: an AI-powered helpdes
 
 ## Environment
 
-- Bun is at `C:\Users\cmuh\.bun\bin` and isn't on PATH. Prepend it: `export PATH="/c/Users/cmuh/.bun/bin:$PATH"` (Git Bash) or `$env:Path = "C:\Users\cmuh\.bun\bin;$env:Path"` (PowerShell). Node isn't installed, so use `bun` / `bunx`, never npm/npx.
+- Bun is at `%USERPROFILE%\.bun\bin` and on the user PATH. If `bun` isn't found (a shell started before it was installed), prepend it: `export PATH="$HOME/.bun/bin:$PATH"` (Git Bash) or `$env:Path = "$env:USERPROFILE\.bun\bin;$env:Path"` (PowerShell). Node isn't installed, so use `bun` / `bunx`, never npm/npx.
 - Docs: use the context7 MCP server if it's available. Otherwise use the installed Playwright typings (`e2e/node_modules/playwright/types/test.d.ts`, plus `e2e/node_modules/playwright-core/types/types.d.ts` for `Page` / `Locator`), and say in your report that context7 wasn't available.
 
 ## The suite setup

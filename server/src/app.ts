@@ -45,7 +45,11 @@ app.get("/api/health", async (_req, res) => {
 });
 
 app.get("/api/me", requireAuth, (req, res) => {
-  res.json(req.session);
+  // Never send the session token: it's the value of the HttpOnly session cookie, and
+  // returning it would let any script on the page read it.
+  const { user, session } = req.session!;
+  const { token: _token, ...safeSession } = session;
+  res.json({ user, session: safeSession });
 });
 
 // Final error handler: log the details server-side, never send stack traces to the client.

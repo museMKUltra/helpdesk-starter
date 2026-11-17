@@ -28,6 +28,10 @@ export const auth = betterAuth({
   advanced: {
     ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER] },
     useSecureCookies: isProduction,
+    // Better Auth skips its origin and CSRF checks when NODE_ENV=test (which the e2e server uses).
+    // Enforce both in every environment so tests cover the same protection as dev and production.
+    disableOriginCheck: false,
+    disableCSRFCheck: false,
   },
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   // Production only (`bun run start` sets NODE_ENV=production); off in dev and in the e2e suite.
