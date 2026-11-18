@@ -3,6 +3,7 @@ import helmet from "helmet";
 import { toNodeHandler } from "better-auth/node";
 import { auth, CLIENT_IP_HEADER } from "./auth";
 import { prisma } from "./db";
+import { requireAdmin } from "./middleware/requireAdmin";
 import { requireAuth } from "./middleware/requireAuth";
 
 export const app = express();
@@ -50,6 +51,16 @@ app.get("/api/me", requireAuth, (req, res) => {
   const { user, session } = req.session!;
   const { token: _token, ...safeSession } = session;
   res.json({ user, session: safeSession });
+});
+
+// Admin: list all users. Explicit select so new columns or relations never leak.
+// Express 5 forwards async rejections to the error handler below.
+app.get("/api/admin/users", requireAuth, requireAdmin, async (_req, res) => {
+  const users = await prisma.user.findMany({
+    select: { id: true, name: true, email: true, role: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+  res.json({ users });
 });
 
 // Final error handler: log the details server-side, never send stack traces to the client.
