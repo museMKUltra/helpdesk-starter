@@ -11,3 +11,6 @@ playwright-report/
 blob-report/
 playwright/.cache/
 e2e/.auth/
+
+# Machine-local MCP config (IDE server on a local port)
+.mcp.json
