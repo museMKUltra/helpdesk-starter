@@ -1,17 +1,21 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 type Health = { status: string; database: string };
 
 export default function HomePage() {
-  const [health, setHealth] = useState<Health | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/health")
-      .then((res) => res.json() as Promise<Health>)
-      .then(setHealth)
-      .catch(() => setError("Server unreachable"));
-  }, []);
+  const { data: health, isError } = useQuery({
+    queryKey: ["health"],
+    queryFn: async ({ signal }) =>
+      // A degraded server still answers 503 with a Health body, so treat it as data.
+      (
+        await api.get<Health>("/health", {
+          signal,
+          validateStatus: (s) => s === 200 || s === 503,
+        })
+      ).data,
+  });
+  const error = isError ? "Server unreachable" : null;
 
   return (
     <main className="mx-auto max-w-xl p-8">

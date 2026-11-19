@@ -75,6 +75,7 @@ Better Auth with email/password and database sessions stored in Postgres via the
 - **Login:** `LoginPage` calls `signIn.email({ email, password })`. On error it sets `root.server`; on success it navigates to `/`. A user who is already signed in is redirected from `/login` to `/`.
 - **Logout:** `NavBar` calls `signOut()` and then navigates to `/login`.
 - `useSession` is reactive, so components re-render after sign-in and sign-out without manual refetching.
+- **Data fetching:** TanStack Query (`QueryClientProvider` in `main.tsx`, client in `src/lib/query-client.ts`) with axios (`api` from `@/lib/api`, `baseURL: "/api"`). Use `useQuery` with `queryFn: ({ signal }) => api.get(..., { signal })`, never raw `fetch` + `useEffect`. Queries retry only on network errors, not on HTTP errors. `NavBar` calls `queryClient.clear()` on sign-out, so cached data never carries over to the next user.
 
 ## E2E tests (Playwright)
 

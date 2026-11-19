@@ -1,11 +1,15 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router";
 import { signOut } from "../lib/auth-client";
 
 export default function NavBar({ userName, isAdmin }: { userName: string; isAdmin: boolean }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   async function handleSignOut() {
     await signOut();
+    // Drop cached API data so the next user who signs in never sees the previous user's.
+    queryClient.clear();
     navigate("/login", { replace: true });
   }
 

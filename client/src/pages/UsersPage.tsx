@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AlertCircle } from "lucide-react";
+import { api } from "@/lib/api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,24 +21,12 @@ type UserRow = {
 };
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<UserRow[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/admin/users", { signal: controller.signal })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as { users: UserRow[] };
-        setUsers(data.users);
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) return;
-        console.error(err);
-        setError("Couldn't load users");
-      });
-    return () => controller.abort();
-  }, []);
+  const { data: users, isError } = useQuery({
+    queryKey: ["admin", "users"],
+    queryFn: async ({ signal }) =>
+      (await api.get<{ users: UserRow[] }>("/admin/users", { signal })).data.users,
+  });
+  const error = isError ? "Couldn't load users" : null;
 
   return (
     <main className="mx-auto max-w-4xl p-8">
@@ -49,7 +38,7 @@ export default function UsersPage() {
             <AlertCircle />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
-        ) : users === null ? (
+        ) : users === undefined ? (
           <p className="text-muted-foreground">Loading users…</p>
         ) : users.length === 0 ? (
           <p className="text-muted-foreground">No users found</p>
